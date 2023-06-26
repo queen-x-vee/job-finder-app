@@ -1,14 +1,14 @@
-import React from "react";
+import { Stack, useRouter, useSearchParams } from "expo-router";
+import { useCallback, useState } from "react";
 import {
-  Text,
   View,
+  Text,
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { Stack, useRouter, useSearchParams } from "expo-router";
-import { useCallback, useState } from "react";
+
 import {
   Company,
   JobAbout,
@@ -19,7 +19,6 @@ import {
 } from "../../components";
 import { COLORS, icons, SIZES } from "../../constants";
 import useFetch from "../../hook/useFetch";
-import { useSafeAreaFrame } from "react-native-safe-area-context";
 
 const tabs = ["About", "Qualifications", "Responsibilities"];
 
@@ -31,20 +30,43 @@ const JobDetails = () => {
     job_id: params.id,
   });
 
-  const [refresh, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState(tabs[0]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = () => {};
-  const displayTabContent = ()=>{
-    switch(activeTab){
-        case 'Qualifications':
-            break;
-        case 'About':
-        case 'Responsibilities':
-        default:
-            break;
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    refetch()
+    setRefreshing(false)
+  }, []);
+
+
+  const displayTabContent = () => {
+    switch (activeTab) {
+      case "Qualifications":
+        return (
+          <Specifics
+            title='Qualifications'
+            points={data[0].job_highlights?.Qualifications ?? ["N/A"]}
+          />
+        );
+
+      case "About":
+        return (
+          <JobAbout info={data[0].job_description ?? "No data provided"} />
+        );
+
+      case "Responsibilities":
+        return (
+          <Specifics
+            title='Responsibilities'
+            points={data[0].job_highlights?.Responsibilities ?? ["N/A"]}
+          />
+        );
+
+      default:
+        return null;
     }
-  }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightWhite }}>
@@ -56,30 +78,28 @@ const JobDetails = () => {
           headerLeft: () => (
             <ScreenHeaderBtn
               iconUrl={icons.left}
-              dimension="60%"
+              dimension='60%'
               handlePress={() => router.back()}
             />
           ),
           headerRight: () => (
-            <ScreenHeaderBtn iconUrl={icons.share} dimension={"60%"} />
+            <ScreenHeaderBtn iconUrl={icons.share} dimension='60%' />
           ),
           headerTitle: "",
         }}
       />
 
       <>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
+        <ScrollView showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
           {isLoading ? (
-            <ActivityIndicator size={"large"} color={COLORS.primary} />
+            <ActivityIndicator size='large' color={COLORS.primary} />
           ) : error ? (
-            <Text> something went wrong</Text>
+            <Text>Something went wrong</Text>
           ) : data.length === 0 ? (
-            <Text>No data for this job</Text>
+            <Text>No data available</Text>
           ) : (
             <View style={{ padding: SIZES.medium, paddingBottom: 100 }}>
               <Company
@@ -94,10 +114,13 @@ const JobDetails = () => {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
               />
+
               {displayTabContent()}
             </View>
           )}
         </ScrollView>
+
+        
       </>
     </SafeAreaView>
   );
